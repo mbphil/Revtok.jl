@@ -10,7 +10,7 @@ function space_priority(char)
 end
 
 "Simple reversible tokenizer"
-function tokenize(s::AbstractString, decap::Bool=false, split_punctuation=True)
+function tokenize(s::AbstractString, decap::Bool=false, split_punctuation::Bool=true)
     toks = [Vector{Char}()]
     current_cat = 0 # or -2?
     for c in s
