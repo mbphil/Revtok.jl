@@ -1,4 +1,4 @@
-using Base.UTF8proc: category_abbrev
+import Base.Unicode: category_abbrev
 
 const HALF = ' '
 const CAP = '\ue302'
@@ -9,8 +9,8 @@ function space_priority(char)
     return SPACE_PRIORITY[category_abbrev(char)[1]]
 end
 
-"Simple reversible tokenizer"
-function tokenize(s::AbstractString, decap::Bool=false, split_punctuation=True)
+#"Simple reversible tokenizer"
+function tokenize(s::AbstractString, decap::Bool=false, split_punctuation::Bool=true)
     toks = [Vector{Char}()]
     current_cat = 0 # or -2?
     for c in s
@@ -40,7 +40,7 @@ function tokenize(s::AbstractString, decap::Bool=false, split_punctuation=True)
     if current_cat > 0
         push!(toks[end], HALF)
     end
-    toks = map(arr -> convert(String, arr), toks)
+    toks = map(arr -> String(arr), toks)
     if decap
         return decapitalize.(toks)
     end
@@ -60,7 +60,7 @@ function decapitalize(tok)
 end
 
 function detokenize(l)
-    text = replace(join(l, ""), "$CAP$HALF", "$HALF$CAP")
-    text = replace(text, Regex("$HALF+"), s->" " ^ (length(s) ÷ 2))
-    return replace(text, Regex("\\Q$CAP\\E.", "s"), s->uppercase(s[end]))
+    text = replace(join(l, ""), "$CAP$HALF" => "$HALF$CAP")
+    text = replace(text, Regex("$HALF+") => s->" " ^ (length(s) ÷ 2))
+    return replace(text, Regex("\\Q$CAP\\E.", "s") => s->uppercase(s[end]))
 end

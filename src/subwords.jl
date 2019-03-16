@@ -61,9 +61,9 @@ end
 function buildngrams!(utterance::Utterance{S}, ngrams) where {S}
     utext = utterance.text
     i = 1
-    while i < endof(utext)
+    while i < lastindex(utext)
         j = i
-        while j < endof(utext)
+        while j < lastindex(utext)
             j = nextind(utext, j)
             text = utterance.text[i:j]
             ngram = get!(()->NGram(text), ngrams, text)
@@ -139,7 +139,7 @@ end
 
 function buildvocab(counts::Accumulator{S}, maxsize::Int) where {S}
     #display(counts)
-    vocab = OrderedDict{S, Float64}(counter(string.(convert(Vector{Char}, join(keys(counts), "")))))
+    vocab = OrderedDict{S, Float64}(counter(string.(Vector{Char}( join(keys(counts), "")))))
     #vocab = OrderedDict{S, Float64}()
     ngrams = Dict(ng => (entropy(ng), ng.text) for ng in buildngrams(counts))
     ngrams = PriorityQueue(ngrams, Base.Order.Reverse)
@@ -158,11 +158,11 @@ function buildvocab(counts::Accumulator{S}, maxsize::Int) where {S}
     return vocab
 end
 
-function buildvocab(counts::Associative, maxsize::Number)
+function buildvocab(counts::AbstractDict, maxsize::Number)
     buildvocab(counter(convert(Dict{String, Int}, counts)), convert(Int, maxsize))
 end
 
-function segment(utext::S, vocab::Associative{S, Float64}) where {S <: AbstractString}
+function segment(utext::S, vocab::AbstractDict{S, Float64}) where {S <: AbstractString}
     if length(utext) == 1
         return [utext]
     end
@@ -170,8 +170,8 @@ function segment(utext::S, vocab::Associative{S, Float64}) where {S <: AbstractS
     i, segments = 1, OrderedDict(1 => Vector{S}())
     while true
         j = i
-        while j <= endof(utext)
-            nextj = j < endof(utext) ? nextind(utext, j): j + 1
+        while j <= lastindex(utext)
+            nextj = j < lastindex(utext) ? nextind(utext, j) : j + 1
             subword = utext[i:j]
             #display(subword => subword in vocab)
             if subword in vocab
@@ -197,13 +197,13 @@ function segment(utext::S, vocab::Associative{S, Float64}) where {S <: AbstractS
         end
     end
     #display(segments)
-    return segments[endof(utext) + 1]
+    return segments[lastindex(utext) + 1]
 end
 
-function segment(utext::AbstractString, vocab::Associative)
+function segment(utext::AbstractString, vocab::AbstractDict)
     segment(utext, OrderedDict{String, Float64}(vocab))
 end
 
-function segment(utexts::AbstractVector, vocab::Associative)
+function segment(utexts::AbstractVector, vocab::AbstractDict)
     [tok for utext in utexts for tok in segment(utext, vocab)]
 end
